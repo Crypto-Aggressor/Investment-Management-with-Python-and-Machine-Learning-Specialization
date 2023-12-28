@@ -1,93 +1,197 @@
-import yfinance as yf
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import datetime
-import PortfolioOptimizationKit as pok  # Ensure this custom toolkit is accessible
+# import pandas as pd  # For data manipulation
+# import numpy as np  # For numerical operations
+# import matplotlib.pyplot as plt  # For plotting graphs
+# import scipy.stats  # For statistical functions
+# import yfinance as yf  # For fetching financial data using yfinance instead of pandas_datareader
+# from datetime import datetime  # For handling date and time objects
+# from scipy.optimize import minimize  # For optimization functions
+# import PortfolioOptimizationKit as pok  # Custom toolkit for portfolio optimization
 
-# Setting the style for the plots
-sns.set_style("darkgrid")
+# plt.style.use("seaborn")  # Setting the plot style
 
-# Define stock tickers and calculate the number of assets
-tickers = ['AMZN', 'KO', 'MSFT']
-n_assets = len(tickers)
+# # Define a function to calculate portfolio features such as return, volatility, and Sharpe ratio
+# def get_portfolio_features(weights, rets, covmat, risk_free_rate, periods_per_year):
+#     """
+#     Calculate portfolio return, volatility, and Sharpe ratio.
 
-# Initialize a DataFrame to store stock data
-stocks = pd.DataFrame()
+#     Parameters:
+#     - weights: Array of asset weights in the portfolio.
+#     - rets: Annualized returns for each asset.
+#     - covmat: Covariance matrix of asset returns.
+#     - risk_free_rate: Risk-free rate for Sharpe ratio calculation.
+#     - periods_per_year: Number of periods in a year (trading days).
 
-# Set the start and end dates for fetching historical data
-start_date = "2011-01-01"
-end_date = "2023-12-26"
+#     Returns:
+#     Tuple of (return, volatility, sharpe ratio) for the portfolio.
+#     """
+#     vol = pok.portfolio_volatility(weights, covmat)
+#     vol = pok.annualize_vol(vol, periods_per_year)
+#     ret = pok.portfolio_return(weights, rets)
+#     shp = pok.sharpe_ratio(ret, risk_free_rate, periods_per_year, v=vol)
+#     return ret, vol, shp
 
-# Loop through each stock to retrieve daily adjusted close prices over the specified period
-for stock_name in tickers:
-    ticker_data = yf.Ticker(stock_name)
-    hist_data = ticker_data.history(start=start_date, end=end_date)
-    stocks[stock_name] = hist_data['Close']
+# # Modern Portfolio Theory (MPT) is a mathematical framework for constructing a portfolio of assets to maximize expected return for a given level of risk.
+# # It's based on the principle of diversification, suggesting that a mixed variety of investments yields less risk than any single investment.
 
-# Round the stock data for better readability
-stocks = round(stocks, 2)
+# # Efficient Frontiers in MPT: a graph showing the best possible return for a given level of risk.
 
-# Calculate daily returns using a portfolio optimization kit
-daily_rets = pok.compute_returns(stocks)
+# # Example with two assets to demonstrate portfolio volatility calculation.
+# nret = 500  # Number of returns
+# periods_per_year = 252  # Trading days in a year
+# risk_free_rate = 0.0  # Risk-free rate for Sharpe ratio calculation
 
-# Annualize the daily returns assuming 252 trading days per year
-ann_rets = pok.annualize_rets(daily_rets, 252)
+# mean_1 = 0.001019  # Mean return for asset 1
+# mean_2 = 0.001249  # Mean return for asset 2
+# vol_1  = 0.016317  # Volatility for asset 1
+# vol_2  = 0.019129  # Volatility for asset 2
 
-# Compute mean, standard deviation, and covariance of daily returns
-mean_rets = daily_rets.mean()
-std_rets = daily_rets.std()
-cov_rets = daily_rets.cov()
+# rhos  = np.linspace(1, -1, num=6)  # Correlation range
+# ncorr = len(rhos)
 
-# Define parameters for portfolio simulation
-periods_per_year = 252
-num_portfolios = 4000
-risk_free_rate = 0
+# nweig = 20
+# w1 = np.linspace(0, 1, num=nweig)
+# w2 = 1 - w1
+# ww = pd.DataFrame([w1, w2]).T
 
-# Generate portfolios with random weights
-all_portfolios = []  # Initialize a list to collect all portfolio data
+# np.random.seed(1)
 
-for i in range(num_portfolios):
-    weights = np.random.random(n_assets)
-    weights /= np.sum(weights)
+# fig, ax = plt.subplots(1, 6, figsize=(20, 4))    
+# ax = ax.flatten()
 
-    portfolio_ret = pok.portfolio_return(weights, ann_rets)
-    portfolio_vol = pok.portfolio_volatility(weights, cov_rets)
-    portfolio_vol = pok.annualize_vol(portfolio_vol, periods_per_year)
-    portfolio_spr = pok.sharpe_ratio(portfolio_ret, risk_free_rate, periods_per_year, v=portfolio_vol)
+# for k_rho, rho in enumerate(rhos):
+#     portfolio = pd.DataFrame(columns=["return", "volatility", "sharpe ratio"])
 
-    # Append the new portfolio data to the list
-    all_portfolios.append({"return": portfolio_ret,
-                           "volatility": portfolio_vol,
-                           "sharpe ratio": portfolio_spr,
-                           "w1": weights[0],
-                           "w2": weights[1],
-                           "w3": weights[2]})
+#     cov_ij = rho * vol_1 * vol_2
+#     cov_rets = pd.DataFrame([[vol_1**2, cov_ij], [cov_ij, vol_2**2]])
+#     daily_rets = pd.DataFrame(np.random.multivariate_normal((mean_1, mean_2), cov_rets.values, nret))
+    
+#     for i in range(ww.shape[0]):
+#         weights = ww.loc[i]
 
-# Convert the list of all portfolio data into a DataFrame
-portfolios = pd.DataFrame(all_portfolios)
+#         ann_rets = pok.annualize_rets(daily_rets, periods_per_year)
+#         portfolio_ret = pok.portfolio_return(weights, ann_rets)
+#         portfolio_vol = pok.portfolio_volatility(weights, cov_rets)
+#         portfolio_vol = pok.annualize_vol(portfolio_vol, periods_per_year)
+#         portfolio_spr = pok.sharpe_ratio(portfolio_ret, risk_free_rate, periods_per_year, v=portfolio_vol)
 
-# Plotting Portfolios and Efficient Frontier
-fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-im = ax.scatter(portfolios["volatility"], portfolios["return"], c=portfolios["sharpe ratio"], s=20,
-                edgecolor=None, cmap='RdYlBu')
-ax.set_title("Portfolios and Efficient Frontier")
-ax.set_ylabel("return (%)")
-ax.set_xlabel("volatility (%)")
-ax.grid()
+#         new_row = pd.DataFrame([{"return": portfolio_ret, "volatility": portfolio_vol, "sharpe ratio": portfolio_spr}])
+#         portfolio = pd.concat([portfolio, new_row], ignore_index=True)
 
-df = pok.efficient_frontier(50, daily_rets, cov_rets, periods_per_year)
-df.plot.line(x="volatility", y="return", style="--", color="tab:green", ax=ax, grid=True,
-             label="Efficient frontier")
+#     im = ax[k_rho].scatter(portfolio["volatility"]*100, portfolio["return"]*100, c=w2, cmap='RdYlBu') 
+#     ax[k_rho].grid()
+#     ax[k_rho].set_title(f"Correlation: {np.round(rho,2)}", y=0.9, loc='left')
+#     ax[k_rho].set_xlabel("Volatility (%)")
+#     if k_rho == 0: ax[k_rho].set_ylabel("Return (%)") 
+#     ax[k_rho].set_xlim([0, 32])
+#     ax[k_rho].set_ylim([0, 95])
 
-fig.colorbar(im, ax=ax)
-plt.show()
+# fig.colorbar(im, ax=ax.ravel().tolist())
+# plt.show()
 
-# Function to get portfolio features
+# # Real-World Example: Analyzing U.S. Stocks for Portfolio Optimization
+# tickers  = ['AMZN','KO','MSFT']
+# n_assets = len(tickers)
+
+# stocks = pd.DataFrame()
+
+# start_date = "2011-01-01"
+# end_date = "2023-01-01"
+
+# for stock_name in tickers:
+#     ticker_data = yf.Ticker(stock_name)  # Using yfinance to fetch data
+#     hist_data = ticker_data.history(start=start_date, end=end_date)
+#     stocks[stock_name] = hist_data['Close']
+
+# stocks = round(stocks,2)
+# daily_rets = pok.compute_returns(stocks)
+# ann_rets = pok.annualize_rets(daily_rets, 252)
+
+# mean_rets = daily_rets.mean()
+# std_rets  = daily_rets.std()
+# cov_rets  = daily_rets.cov()
+
+# num_portfolios   = 4000
+# portfolios       = pd.DataFrame(columns=["return","volatility","sharpe ratio","w1","w2","w3"])
+
+# all_portfolios = []
+
+# for i in range(num_portfolios):
+#     weights = np.random.random(n_assets)
+#     weights /= np.sum(weights)
+    
+#     portfolio_ret = pok.portfolio_return(weights, ann_rets)        
+#     portfolio_vol = pok.portfolio_volatility(weights, cov_rets)
+#     portfolio_vol = pok.annualize_vol(portfolio_vol, periods_per_year)
+#     portfolio_spr = pok.sharpe_ratio(portfolio_ret, risk_free_rate, periods_per_year, v=portfolio_vol)
+    
+#     all_portfolios.append({"return":portfolio_ret, 
+#                            "volatility":portfolio_vol, 
+#                            "sharpe ratio":portfolio_spr, 
+#                            "w1": weights[0], 
+#                            "w2": weights[1], 
+#                            "w3": weights[2]})
+
+# portfolios = pd.DataFrame(all_portfolios)
+
+# fig, ax = plt.subplots(1,1, figsize=(10,6)) 
+
+# im = ax.scatter(portfolios["volatility"], portfolios["return"], c=portfolios["sharpe ratio"], s=20, 
+#                 edgecolor=None, cmap='RdYlBu')
+# ax.set_title("Portfolios and Efficient Frontier")
+# ax.set_ylabel("return (%)")
+# ax.grid()
+
+# df = pok.efficient_frontier(50, daily_rets, cov_rets, periods_per_year)
+# df.plot.line(x="volatility", y="return", style="--", color="tab:green", ax=ax, grid=True, 
+#              label="Efficient frontier")
+# ax.set_xlim([0.125,0.33])
+# ax.set_xlabel("volatility (%)")
+
+# fig.colorbar(im, ax=ax)
+# plt.show()
+
+# # Maximizing the Sharpe Ratio Portfolio with a Non-Zero Risk-Free Asset
+# risk_free_rate = 0.06
+# optimal_weights = pok.maximize_shape_ratio(ann_rets, cov_rets, risk_free_rate, periods_per_year)
+# print("Optimal weights for the maximum Sharpe Ratio portfolio:")
+# print("  AMZN: {:.2f}%".format(optimal_weights[0]*100))
+# print("  KO:   {:.2f}%".format(optimal_weights[1]*100))
+# print("  MSFT: {:.2f}%".format(optimal_weights[2]*100))
+
+# ret, vol, shp = get_portfolio_features(optimal_weights, ann_rets, cov_rets, risk_free_rate, periods_per_year)
+
+# # Plotting the efficient frontier and the Capital Market Line
+# df, ax = pok.efficient_frontier(40, daily_rets, cov_rets, periods_per_year, risk_free_rate=risk_free_rate, 
+#                                 iplot=True, cml=True)
+# ax.set_title("Maximum Sharpe Ratio Portfolio (SR={}) with Risk-Free Rate {}%".format(np.round(shp, 2), risk_free_rate*100))
+# plt.show()
+
+# # Adjusting the risk-free rate
+# risk_free_rate = 0.05
+
+# df, ax = pok.efficient_frontier(90, daily_rets, cov_rets, periods_per_year, risk_free_rate=risk_free_rate, 
+#                                 iplot=True, hsr=True, cml=True, mvp=True, ewp=True)
+# ax.set_title("Efficient Frontier with Maximum Sharpe Ratio Portfolio (SR={}) at Risk-Free Rate {}%".format(np.round(shp, 2), risk_free_rate*100))
+# plt.show()
+
+# print(df.tail())
+
+import pandas as pd  # For data manipulation
+import numpy as np  # For numerical operations
+import matplotlib.pyplot as plt  # For plotting graphs
+import seaborn as sns  # For styling graphs
+import scipy.stats  # For statistical functions
+import yfinance as yf  # For fetching financial data using yfinance instead of pandas_datareader
+from datetime import datetime  # For handling date and time objects
+from scipy.optimize import minimize  # For optimization functions
+import PortfolioOptimizationKit as pok  # Custom toolkit for portfolio optimization
+
+sns.set(style="darkgrid")  # Setting the plot style using seaborn
+
+# Define a function to calculate portfolio features such as return, volatility, and Sharpe ratio
 def get_portfolio_features(weights, rets, covmat, risk_free_rate, periods_per_year):
     """
-    Calculate and print portfolio return, volatility, and Sharpe ratio.
+    Calculate portfolio return, volatility, and Sharpe ratio.
 
     Parameters:
     - weights: Array of asset weights in the portfolio.
@@ -99,108 +203,155 @@ def get_portfolio_features(weights, rets, covmat, risk_free_rate, periods_per_ye
     Returns:
     Tuple of (return, volatility, sharpe ratio) for the portfolio.
     """
-    # Calculate portfolio volatility
     vol = pok.portfolio_volatility(weights, covmat)
     vol = pok.annualize_vol(vol, periods_per_year)
-
-    # Calculate portfolio return
     ret = pok.portfolio_return(weights, rets)
-
-    # Calculate portfolio Sharpe ratio
     shp = pok.sharpe_ratio(ret, risk_free_rate, periods_per_year, v=vol)
-
-    # Display the calculated metrics
-    print("Portfolio return: {:.2f}%" .format(ret*100))
-    print("Portfolio volatility: {:.2f}%" .format(vol*100))
-    print("Portfolio Sharpe ratio: {:.2f}" .format(shp))
-
     return ret, vol, shp
 
-# Optimizing for Minimum Volatility
-print("Annual returns of individual assets:")
-print(ann_rets)
+# Modern Portfolio Theory (MPT) is a mathematical framework for constructing a portfolio of assets to maximize expected return for a given level of risk.
+# It's based on the principle of diversification, suggesting that a mixed variety of investments yields less risk than any single investment.
 
-# Find optimal weights for the portfolio with minimum volatility
-optimal_weights = pok.minimize_volatility(ann_rets, cov_rets)
-print("Optimal weights for Minimum Volatility Portfolio:")
+# Efficient Frontiers in MPT: a graph showing the best possible return for a given level of risk.
+
+# Example with two assets to demonstrate portfolio volatility calculation.
+nret = 500  # Number of returns
+periods_per_year = 252  # Trading days in a year
+risk_free_rate = 0.0  # Risk-free rate for Sharpe ratio calculation
+
+mean_1 = 0.001019  # Mean return for asset 1
+mean_2 = 0.001249  # Mean return for asset 2
+vol_1  = 0.016317  # Volatility for asset 1
+vol_2  = 0.019129  # Volatility for asset 2
+
+rhos  = np.linspace(1, -1, num=6)  # Correlation range
+ncorr = len(rhos)
+
+nweig = 20
+w1 = np.linspace(0, 1, num=nweig)
+w2 = 1 - w1
+ww = pd.DataFrame([w1, w2]).T
+
+np.random.seed(1)
+
+fig, ax = plt.subplots(1, 6, figsize=(20, 4))    
+ax = ax.flatten()
+
+for k_rho, rho in enumerate(rhos):
+    portfolio = pd.DataFrame(columns=["return", "volatility", "sharpe ratio"])
+
+    cov_ij = rho * vol_1 * vol_2
+    cov_rets = pd.DataFrame([[vol_1**2, cov_ij], [cov_ij, vol_2**2]])
+    daily_rets = pd.DataFrame(np.random.multivariate_normal((mean_1, mean_2), cov_rets.values, nret))
+    
+    for i in range(ww.shape[0]):
+        weights = ww.loc[i]
+
+        ann_rets = pok.annualize_rets(daily_rets, periods_per_year)
+        portfolio_ret = pok.portfolio_return(weights, ann_rets)
+        portfolio_vol = pok.portfolio_volatility(weights, cov_rets)
+        portfolio_vol = pok.annualize_vol(portfolio_vol, periods_per_year)
+        portfolio_spr = pok.sharpe_ratio(portfolio_ret, risk_free_rate, periods_per_year, v=portfolio_vol)
+
+        new_row = pd.DataFrame([{"return": portfolio_ret, "volatility": portfolio_vol, "sharpe ratio": portfolio_spr}])
+        portfolio = pd.concat([portfolio, new_row], ignore_index=True)
+
+    im = ax[k_rho].scatter(portfolio["volatility"]*100, portfolio["return"]*100, c=w2, cmap='RdYlBu') 
+    ax[k_rho].grid()
+    ax[k_rho].set_title(f"Correlation: {np.round(rho,2)}", y=0.9, loc='left')
+    ax[k_rho].set_xlabel("Volatility (%)")
+    if k_rho == 0: ax[k_rho].set_ylabel("Return (%)") 
+    ax[k_rho].set_xlim([0, 32])
+    ax[k_rho].set_ylim([0, 95])
+
+fig.colorbar(im, ax=ax.ravel().tolist())
+plt.show()
+
+# Real-World Example: Analyzing U.S. Stocks for Portfolio Optimization
+tickers  = ['AMZN','KO','MSFT']
+n_assets = len(tickers)
+
+stocks = pd.DataFrame()
+
+start_date = "2011-01-01"
+end_date = "2023-01-01"
+
+for stock_name in tickers:
+    ticker_data = yf.Ticker(stock_name)  # Using yfinance to fetch data
+    hist_data = ticker_data.history(start=start_date, end=end_date)
+    stocks[stock_name] = hist_data['Close']
+
+stocks = round(stocks,2)
+daily_rets = pok.compute_returns(stocks)
+ann_rets = pok.annualize_rets(daily_rets, 252)
+
+mean_rets = daily_rets.mean()
+std_rets  = daily_rets.std()
+cov_rets  = daily_rets.cov()
+
+num_portfolios   = 4000
+portfolios       = pd.DataFrame(columns=["return","volatility","sharpe ratio","w1","w2","w3"])
+
+all_portfolios = []
+
+for i in range(num_portfolios):
+    weights = np.random.random(n_assets)
+    weights /= np.sum(weights)
+    
+    portfolio_ret = pok.portfolio_return(weights, ann_rets)        
+    portfolio_vol = pok.portfolio_volatility(weights, cov_rets)
+    portfolio_vol = pok.annualize_vol(portfolio_vol, periods_per_year)
+    portfolio_spr = pok.sharpe_ratio(portfolio_ret, risk_free_rate, periods_per_year, v=portfolio_vol)
+    
+    all_portfolios.append({"return":portfolio_ret, 
+                           "volatility":portfolio_vol, 
+                           "sharpe ratio":portfolio_spr, 
+                           "w1": weights[0], 
+                           "w2": weights[1], 
+                           "w3": weights[2]})
+
+portfolios = pd.DataFrame(all_portfolios)
+
+fig, ax = plt.subplots(1,1, figsize=(10,6)) 
+
+im = ax.scatter(portfolios["volatility"], portfolios["return"], c=portfolios["sharpe ratio"], s=20, 
+                edgecolor=None, cmap='RdYlBu')
+ax.set_title("Portfolios and Efficient Frontier")
+ax.set_ylabel("return (%)")
+ax.grid()
+
+df = pok.efficient_frontier(50, daily_rets, cov_rets, periods_per_year)
+df.plot.line(x="volatility", y="return", style="--", color="tab:green", ax=ax, grid=True, 
+             label="Efficient frontier")
+ax.set_xlim([0.125,0.33])
+ax.set_xlabel("volatility (%)")
+
+fig.colorbar(im, ax=ax)
+plt.show()
+
+# Maximizing the Sharpe Ratio Portfolio with a Non-Zero Risk-Free Asset
+risk_free_rate = 0.06
+optimal_weights = pok.maximize_shape_ratio(ann_rets, cov_rets, risk_free_rate, periods_per_year)
+print("Optimal weights for the maximum Sharpe Ratio portfolio:")
 print("  AMZN: {:.2f}%".format(optimal_weights[0]*100))
 print("  KO:   {:.2f}%".format(optimal_weights[1]*100))
 print("  MSFT: {:.2f}%".format(optimal_weights[2]*100))
 
-# Calculate portfolio features for the portfolio with minimum volatility
 ret, vol, shp = get_portfolio_features(optimal_weights, ann_rets, cov_rets, risk_free_rate, periods_per_year)
 
-# Plotting the Efficient Frontier with Minimum Volatility Portfolio
-fig, ax = plt.subplots(1, 1, figsize=(8, 4))
-df.plot.line(x="volatility", y="return", style="--", color="coral", ax=ax, grid=True, label="Efficient frontier")
-ax.scatter(vol, ret, marker="X", color='g', s=120, label="Minimum Volatility Portfolio")
-ax.set_xlim([0.13, 0.33])
-ax.legend()
-ax.set_title("Minimum Volatility Portfolio on Efficient Frontier")
+# Plotting the efficient frontier and the Capital Market Line
+df, ax = pok.efficient_frontier(40, daily_rets, cov_rets, periods_per_year, risk_free_rate=risk_free_rate, 
+                                iplot=True, cml=True)
+ax.set_title("Maximum Sharpe Ratio Portfolio (SR={}) with Risk-Free Rate {}%".format(np.round(shp, 2), risk_free_rate*100))
 plt.show()
 
-# Optimizing for Minimum Volatility for a Specific Return
-target_return = 0.16
+# Adjusting the risk-free rate
+risk_free_rate = 0.05
 
-# Calculate optimal weights to minimize volatility for the given target return
-optimal_weights = pok.minimize_volatility(ann_rets, cov_rets, target_return)
-print("Optimal weights for Minimum Volatility Portfolio with Target Return:")
-print("  AMZN: {:.2f}%".format(optimal_weights[0]*100))
-print("  KO:   {:.2f}%".format(optimal_weights[1]*100))
-print("  MSFT: {:.2f}%".format(optimal_weights[2]*100))
-
-# Calculate and display the portfolio's return, volatility, and Sharpe ratio for the given target return
-ret, vol, shp = get_portfolio_features(optimal_weights, ann_rets, cov_rets, risk_free_rate, periods_per_year)
-
-# Plotting the Efficient Frontier with Minimum Volatility Portfolio for Target Return
-fig, ax = plt.subplots(1, 1, figsize=(8, 4))
-df.plot.line(x="volatility", y="return", style="--", color="coral", ax=ax, grid=True, label="Efficient frontier")
-ax.scatter(vol, target_return, marker="X", color='g', s=120, label="Min. Volatility Portfolio")
-ax.set_xlim([0.13, 0.33])
-ax.legend()
-ax.set_title("Minimum Volatility Portfolio for Given Return of 16%")
+df, ax = pok.efficient_frontier(90, daily_rets, cov_rets, periods_per_year, risk_free_rate=risk_free_rate, 
+                                iplot=True, hsr=True, cml=True, mvp=True, ewp=True)
+ax.set_title("Efficient Frontier with Maximum Sharpe Ratio Portfolio (SR={}) at Risk-Free Rate {}%".format(np.round(shp, 2), risk_free_rate*100))
 plt.show()
 
-# Now, we will add the optimization for maximum Sharpe Ratio and for maximum Sharpe Ratio at a specified volatility
-# based on the structure and formulas provided in the documentation.
+print(df.tail())
 
-# Optimizing Portfolios for Maximum Sharpe Ratio
-optimal_weights_sharpe = pok.maximize_shape_ratio(ann_rets, cov_rets, risk_free_rate, periods_per_year)
-print("Optimal weights for Maximum Sharpe Ratio Portfolio:")
-print("  AMZN: {:.2f}%".format(optimal_weights_sharpe[0]*100))
-print("  KO:   {:.2f}%".format(optimal_weights_sharpe[1]*100))
-print("  MSFT: {:.2f}%".format(optimal_weights_sharpe[2]*100))
-
-# Calculate the return, volatility, and Sharpe ratio of the optimal portfolio
-ret_sharpe, vol_sharpe, shp_sharpe = get_portfolio_features(optimal_weights_sharpe, ann_rets, cov_rets, risk_free_rate, periods_per_year)
-
-# Plotting the Efficient Frontier with Maximum Sharpe Ratio Portfolio
-fig, ax = plt.subplots(1, 1, figsize=(8, 4))
-df.plot.line(x="volatility", y="return", style="--", color="coral", ax=ax, grid=True, label="Efficient frontier")
-ax.scatter(vol_sharpe, ret_sharpe, marker="X", color='r', s=120, label="Max Sharpe Ratio Portfolio")
-ax.set_xlim([0.13, 0.33])
-ax.legend()
-ax.set_title("Maximum Sharpe Ratio Portfolio on Efficient Frontier")
-plt.show()
-
-# Optimizing Portfolios: Maximizing Sharpe Ratio at a Specified Volatility
-target_volatility = 0.2
-
-# Calculate optimal weights to maximize Sharpe ratio for the given target volatility
-optimal_weights_sharpe_vol = pok.maximize_shape_ratio(ann_rets, cov_rets, risk_free_rate, periods_per_year, target_volatility)
-print("Optimal weights for Maximum Sharpe Ratio Portfolio at Specified Volatility:")
-print("  AMZN: {:.2f}%".format(optimal_weights_sharpe_vol[0]*100))
-print("  KO:   {:.2f}%".format(optimal_weights_sharpe_vol[1]*100))
-print("  MSFT: {:.2f}%".format(optimal_weights_sharpe_vol[2]*100))
-
-# Retrieve and display the portfolio's return, volatility, and Sharpe ratio
-ret_sharpe_vol, vol_sharpe_vol, shp_sharpe_vol = get_portfolio_features(optimal_weights_sharpe_vol, ann_rets, cov_rets, risk_free_rate, periods_per_year)
-
-# Visualize the efficient frontier and indicate the portfolio with the highest Sharpe ratio at the specified volatility
-fig, ax = plt.subplots(1, 1, figsize=(8, 4))
-df.plot.line(x="volatility", y="return", style="--", color="coral", ax=ax, grid=True, label="Efficient frontier")
-ax.scatter(vol_sharpe_vol, ret_sharpe_vol, marker="X", color='r', s=120, label="Highest Sharpe Ratio Portfolio")
-ax.set_xlim([0.13, 0.33])
-ax.legend()
-ax.set_title(f"Maximum Sharpe Ratio Portfolio at {target_volatility*100}% Volatility")
-plt.show()
