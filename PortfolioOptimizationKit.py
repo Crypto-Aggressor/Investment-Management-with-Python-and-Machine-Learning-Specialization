@@ -10,7 +10,7 @@ from numpy.linalg import inv
 # Load and format data files
 # ---------------------------------------------------------------------------------
 def path_to_data_folder():
-    return "/Users/leonardorocchi/Documents/Coding/Python/finance-courses/data/" 
+    return "C:/Users/amine/bin/github-projects/Investment-Management-with-Python-and-Machine-Learning-Specialization/data/"
 
 def get_ffme_returns():
     '''
