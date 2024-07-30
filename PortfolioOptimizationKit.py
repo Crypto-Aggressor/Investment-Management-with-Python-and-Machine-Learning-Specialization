@@ -82,10 +82,15 @@ def get_ind_file(filetype="rets", nind=30, ew=False):
         divisor = 1
     else:
         raise ValueError("filetype must be one of: rets, nfirms, size")
-    filepath = path_to_data_folder() + "ind{}_m_{}.csv" .format(nind, name)
-    ind = pd.read_csv(filepath, index_col=0, parse_dates=True) / divisor
-    ind.index = pd.to_datetime(ind.index, format="%Y%m").to_period("M")
+    
+    filepath = path_to_data_folder() + f"ind{nind}_m_{name}.csv"
+    
+    # Read the CSV file, specifying the date format
+    ind = pd.read_csv(filepath, index_col=0, parse_dates=True, date_format='%Y%m') / divisor
+    # Convert the index to a PeriodIndex with monthly frequency
+    ind.index = ind.index.to_period('M')
     ind.columns = ind.columns.str.strip()
+    
     return ind
 
 def get_ind_market_caps(nind=30, weights=False):
@@ -413,7 +418,7 @@ def efficient_frontier(n_portfolios, rets, covmat, periods_per_year, risk_free_r
     if iplot:
         ax = df.plot.line(x="volatility", y="return", style="--", color="coral", grid=True, label="Efficient frontier", figsize=(8,4))
         if hsr or cml:
-            w   = maximize_shape_ratio(ann_rets, covmat, risk_free_rate, periods_per_year)
+            w   = maximize_sharpe_ratio(ann_rets, covmat, risk_free_rate, periods_per_year)
             ret = portfolio_return(w, ann_rets)
             vol = annualize_vol( portfolio_volatility(w,covmat), periods_per_year)
             spr = sharpe_ratio(ret, risk_free_rate, periods_per_year, v=vol)
@@ -594,7 +599,7 @@ def minimize_volatility_2(rets, covmatrix, target_return=None, weights_norm_cons
                       bounds = bounds)
     return result.x
 
-def maximize_shape_ratio(rets, covmatrix, risk_free_rate, periods_per_year, target_volatility=None):
+def maximize_sharpe_ratio(rets, covmatrix, risk_free_rate, periods_per_year, target_volatility=None):
     '''
     Returns the optimal weights of the highest sharpe ratio portfolio on the effient frontier. 
     If target_volatility is not None, then the weights correspond to the highest sharpe ratio portfolio 
@@ -1424,7 +1429,7 @@ def weight_maxsharpe(r, cov_estimator=sample_cov, periods_per_year=12, risk_free
     '''
     est_cov = cov_estimator(r, **kwargs)
     ann_ret = annualize_rets(r, periods_per_year=12)
-    return maximize_shape_ratio(ann_ret, est_cov, risk_free_rate=risk_free_rate, periods_per_year=periods_per_year)
+    return maximize_sharpe_ratio(ann_ret, est_cov, risk_free_rate=risk_free_rate, periods_per_year=periods_per_year)
     
 # ---------------------------------------------------------------------------------
 # Black-Litterman model
