@@ -524,8 +524,8 @@ class PortfolioTheoryTools:
         if iplot:
             ax = df.plot.line(x="volatility", y="return", style="--", color="coral", grid=True, label="Efficient frontier", figsize=(8,4))
             if hsr or cml:
-                w   = ReturnAnalysis.maximize_shape_ratio(ann_rets, covmat, risk_free_rate, periods_per_year)
-                ret = ReturnAnalysis.portfolio_return(w, ann_rets)
+                w   = PortfolioTheoryTools.maximize_sharpe_ratio(ann_rets, covmat, risk_free_rate, periods_per_year)
+                ret = PortfolioTheoryTools.portfolio_return(w, ann_rets)
                 vol = ReturnAnalysis.annualize_vol( ReturnAnalysis.portfolio_volatility(w,covmat), periods_per_year)
                 spr = ReturnAnalysis.sharpe_ratio(ret, risk_free_rate, periods_per_year, v=vol)
                 df  = append_row_df(df,vol,ret,spr,w)
@@ -705,7 +705,7 @@ class PortfolioTheoryTools:
                         bounds = bounds)
         return result.x
 
-    def maximize_shape_ratio(rets, covmatrix, risk_free_rate, periods_per_year, target_volatility=None):
+    def maximize_sharpe_ratio(rets, covmatrix, risk_free_rate, periods_per_year, target_volatility=None):
         '''
         Returns the optimal weights of the highest sharpe ratio portfolio on the effient frontier. 
         If target_volatility is not None, then the weights correspond to the highest sharpe ratio portfolio 
@@ -1709,7 +1709,7 @@ class BacktestWeightingSchemes:
         """
         est_cov = cov_estimator(r)
         ann_ret = ReturnAnalysis.annualize_rets(r, periods_per_year)
-        return ReturnAnalysis.maximize_shape_ratio(ann_ret, est_cov, risk_free_rate, periods_per_year)
+        return PortfolioTheoryTools.maximize_sharpe_ratio(ann_ret, est_cov, risk_free_rate, periods_per_year)
 # ---------------------------------------------------------------------------------
 # Black-Litterman model
 # ---------------------------------------------------------------------------------

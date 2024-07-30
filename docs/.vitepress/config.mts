@@ -1,0 +1,70 @@
+import { defineConfig } from 'vitepress';
+
+const base = '/Investment-Management-with-Python-and-Machine-Learning-Specialization/';
+
+export default defineConfig({
+  title: "Investment Management with Python",
+  description: "Discover advanced portfolio management techniques and financial analytics powered by Python and Machine Learning.",
+  base,
+
+  themeConfig: {
+    logo: '/resources/pie.svg',
+
+    footer: {
+      message: 'Translated post certification complex financial theories into practical Python modules post EDHEC Business School Certification , openly shared under the MIT License.',
+      copyright: 'Copyright © 2024-present, Amine El Qazoui.'
+    },
+
+    nav: nav(),
+
+    // nav: [
+    //   { text: 'Home', link: '/' },
+    //   { text: 'Documentation', link: '/1-project-architecture-purpose/1-project-purpose' } // Assuming the first document as the entry point
+    // ],
+    
+    sidebar: {
+      '/': [
+        
+        {
+          text: 'Introduction to Portfolio Construction & Analysis',
+          collapsed: false,
+          items: [
+            { text: 'Overview', link: '/1-intro/1.0-overview' },
+            { text: 'Understanding Risks', link: '/1-intro/1.1-risks' },
+            { text: 'Portfolio Optimization', link: '/1-intro/1.2-optimization' },
+            { text: 'Diversification Strategies', link: '/1-intro/1.3-diversification' },
+            { text: 'Asset Liability Management', link: '/1-intro/1.4-alm' }
+          ]
+        },
+        {
+          text: 'Advanced Portfolio Construction and Analysis',
+          collapsed: false,
+          items: [
+            { text: 'Overview', link: '/2-advanced/2.0-overview' },
+            { text: 'Advanced Insights into Style & Factor Exposures for Portfolio Optimization', link: '/2-advanced/2.1-style-factors' },
+            { text: 'Strategies for Robust Covariance Matrix Estimation in Portfolio Management', link: '/2-advanced/2.2-covariance' }
+          ]
+        }
+      ]
+    },
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/Crypto-Aggressor/Investment-Management-with-Python-and-Machine-Learning-Specialization' }  // Update your actual GitHub project link here
+    ],
+  },
+  markdown: {
+    math: true // Enable built-in support for math rendering
+  },
+  head: [
+    ['link', { rel: 'icon', href: '/favicon.ico' }],
+    ['link', { rel: 'stylesheet', href: '/theme/custom.css' }],
+    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Paytone+One&display=swap' }],
+  ],
+});
+
+function nav() {
+  return [
+    { text: 'Home', link: '/' },
+    { text: 'Intro to Portfolio Construction', link: '/1-intro/1.0-overview' },
+    { text: 'Advanced Portfolio Analysis', link: '/2-advanced/2.0-overview' } // Assuming the first document as the entry point
+  ];
+}
